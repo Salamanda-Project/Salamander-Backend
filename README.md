@@ -89,10 +89,10 @@ http://localhost:3000
   ```
 
 ## Notes
-
 - The API will return errors if duplicate market pairs or DEXs are added.
 - Ensure MongoDB is running before starting the application.
-- Use tools like Postman or cURL to test API endpoints.
+- Use tools like Postman to test API endpoints.
+- While testing with Postman please ensure that all values of the key-value-pair must be capitalized
 
 
 

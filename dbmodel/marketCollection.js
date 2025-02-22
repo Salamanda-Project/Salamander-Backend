@@ -21,7 +21,7 @@ const marketSchema = new Schema({
 // Define model (Collection should be singular form)
 const market = mongoose.model('Dex', marketSchema); // Corrected model name
 
-//Create a new document
+/*Create a new document
 const newMarket = new market({
     pair: 'DEMO/USDT',
     market: [{
@@ -32,7 +32,7 @@ const newMarket = new market({
 });
 
 if (market.findOne({ pair: 'DEMO/USDT' })) {
-    return ({ error: 'Market data already exists' });
+    return;
 }
 // Save document
 newMarket.save()
@@ -42,6 +42,7 @@ newMarket.save()
     .catch((err) => {
         console.log('Error:', err.message);
     });
+*/
 
 // Export the model correctly
 module.exports = market; // Corrected export name
