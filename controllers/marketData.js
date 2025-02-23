@@ -79,6 +79,46 @@ module.exports.updateDexPrices = async (req, res) => {
 
 
 
+
+//Get Requests
+
+//get price by pair and dex
+module.exports.getPriceByPairAndDex = async (req, res) => {
+    let { pair, dex } = req.body;
+    try {
+        let data = await marketData.findOne({ pair });
+        if (data) {
+            let dexPrice = data.market.find((data) => data.dex === dex);
+            if (dexPrice) {
+                res.json({ result: dexPrice.price });
+            } else {
+                res.status(404).json({ error: 'Dex not found' });
+            }
+        } else {
+            res.status(404).json({ error: 'Market data not found' });
+        }
+    } catch (error) {
+        console.log('Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+}
+
+//get all market prices
+module.exports.getAllPricesForPair = async (req, res) => {
+    let { pair } = req.body;
+    try {
+        let data = await marketData.findOne({ pair });
+
+        let allPrices = data.market.map((data) => {
+            return { dex: data.dex, price: data.price };
+        });
+        res.json({ allPrices: allPrices });
+    } catch (error) {
+
+    }
+}
+
+// get all market data
 module.exports.getMarketData = async (req, res) => {
     try {
         let data = await marketData.find();
