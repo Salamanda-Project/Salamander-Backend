@@ -59,10 +59,10 @@ module.exports.updateDexPrices = async (req, res) => {
     try {
         let marketDataExist = await marketData.findOne({ pair });
         if (marketDataExist) {
-            let marketInfoDex = marketDataExist.market.find((data) => data.dex === dex);
-            let marketInfoNetwork = marketDataExist.market.find((data) => data.network === network);
-            if (marketInfoDex && marketInfoNetwork) {
-                marketInfoNetwork.price = price;
+            let marketInfoDex = marketDataExist.market.find((data) => data.dex === dex && data.network === network);
+            //let marketInfoNetwork = marketDataExist.market.find((data) => data.network === network);
+            if (marketInfoDex) {
+                marketInfoDex.price = price;
                 await marketDataExist.save();
                 console.log('Market data updated:', marketDataExist);
                 res.send(marketDataExist);

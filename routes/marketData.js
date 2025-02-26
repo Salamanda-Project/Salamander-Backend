@@ -8,7 +8,7 @@ app.get("/api/getPriceByPairAndDex", controller.getPriceByPairAndDex); //get dat
 app.get("/api/getAllPricesForPair", controller.getAllPricesForPair); //get all prices for pair
 
 app.post("/api/savePairs", controller.addMarketData); //populate data
-app.post("/api/dexprice", controller.addDexPrice); //populate data
+app.post("/api/addDexprice", controller.addDexPrice); //populate data
 app.patch("/api/updatePrice", controller.updateDexPrices); //update data
 
 
