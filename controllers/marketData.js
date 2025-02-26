@@ -89,10 +89,10 @@ module.exports.getPriceByPairAndDex = async (req, res) => {
     try {
         let data = await marketData.findOne({ pair });
         if (data) {
-            let dexPrice = data.market.find((data) => data.dex === dex);
-            let dexNetwork = data.market.find((data) => data.network === network);
-            if (dexPrice && dexNetwork) {
-                res.json({ result: dexPrice.price });
+            let marketInfo = data.market.find((data) => data.dex === dex && data.network === network);
+
+            if (marketInfo) {
+                res.json({ result: marketInfo.price });
             } else {
                 res.status(404).json({ error: 'Dex and Network not found' });
             }
