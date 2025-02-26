@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 // Define schema
 const dexSchema = new Schema({
     dex: { type: String, uppercase: true, required: true },
+    network: { type: String, upperCase: true, required: true },
     price: { type: Number, required: false }
 });
 

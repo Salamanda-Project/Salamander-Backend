@@ -26,18 +26,18 @@ module.exports.addMarketData = async (req, res) => {
 
 //function to add DEX and its price to a market pair 
 module.exports.addDexPrice = async (req, res) => {
-    let { dex, pair, price } = req.body; //get data from request body
+    let { pair, network, dex, price } = req.body; //get data from request body
 
     try { //check for duplicate DEX before adding to market data
         let marketDataExist = await marketData.findOne({ pair });
 
         //DEX duplicate check
         if (marketDataExist) {
-            if (marketDataExist.market.find((data) => data.dex === dex)) {
-                return res.status(400).json({ error: 'DEX already exists' });
+            if (marketDataExist.market.find((data) => data.dex === dex) && marketDataExist.market.find((data) => data.network)) {
+                return res.status(400).json({ error: 'DEX and Network data already exists' });
             }
 
-            marketDataExist.market.push({ dex, price });
+            marketDataExist.market.push({ dex, network, price });
             await marketDataExist.save();
             console.log('Market data updated:', marketDataExist);
             res.send(marketDataExist);
@@ -54,14 +54,15 @@ module.exports.addDexPrice = async (req, res) => {
 
 //Function to update Prices of Pairs in different Dexs
 module.exports.updateDexPrices = async (req, res) => {
-    let { pair, dex, price } = req.body; //get data from request body
+    let { pair, network, dex, price } = req.body; //get data from request body
 
     try {
         let marketDataExist = await marketData.findOne({ pair });
         if (marketDataExist) {
-            let dexPrice = marketDataExist.market.find((data) => data.dex === dex);
-            if (dexPrice) {
-                dexPrice.price = price;
+            let marketInfoDex = marketDataExist.market.find((data) => data.dex === dex);
+            let marketInfoNetwork = marketDataExist.market.find((data) => data.network === network);
+            if (marketInfoDex && marketInfoNetwork) {
+                marketInfoNetwork.price = price;
                 await marketDataExist.save();
                 console.log('Market data updated:', marketDataExist);
                 res.send(marketDataExist);
@@ -84,15 +85,16 @@ module.exports.updateDexPrices = async (req, res) => {
 
 //get price by pair and dex
 module.exports.getPriceByPairAndDex = async (req, res) => {
-    let { pair, dex } = req.body;
+    let { pair, network, dex } = req.body;
     try {
         let data = await marketData.findOne({ pair });
         if (data) {
             let dexPrice = data.market.find((data) => data.dex === dex);
-            if (dexPrice) {
+            let dexNetwork = data.market.find((data) => data.network === network);
+            if (dexPrice && dexNetwork) {
                 res.json({ result: dexPrice.price });
             } else {
-                res.status(404).json({ error: 'Dex not found' });
+                res.status(404).json({ error: 'Dex and Network not found' });
             }
         } else {
             res.status(404).json({ error: 'Market data not found' });
@@ -110,7 +112,7 @@ module.exports.getAllPricesForPair = async (req, res) => {
         let data = await marketData.findOne({ pair });
 
         let allPrices = data.market.map((data) => {
-            return { dex: data.dex, price: data.price };
+            return { dex: data.dex, dex: data.dex.network, price: data.price };
         });
         res.json({ allPrices: allPrices });
     } catch (error) {
