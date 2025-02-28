@@ -211,10 +211,6 @@ async function displayPricesForPair(baseToken, quoteToken) {
  */
 async function main() {
   try {
-    // Connect to database
-    // logger.info('Connecting to MongoDB...');
-    // await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/coinmarket');
-    // logger.info('Connected to MongoDB');
     
     const args = process.argv.slice(2);
     const command = args[0];
@@ -280,8 +276,6 @@ Commands:
         logger.error(`Unknown command: ${command}`);
         process.exit(1);
     }
-    
-    // await mongoose.disconnect();
     logger.info('Disconnected from MongoDB');
   } catch (error) {
     logger.error('Error:', error.message);
