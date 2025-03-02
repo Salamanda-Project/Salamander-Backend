@@ -9,9 +9,16 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@urql/core": "^5.1.0",
+    "axios": "^1.7.9",
+    "ccxt": "^4.4.61",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "graphql-request": "^7.1.2",
     "mongodb": "^6.13.1",
-    "mongoose": "^8.10.1"
+    "mongoose": "^8.10.1",
+    "node-cron": "^3.0.3",
+    "winston": "^3.17.0"
   }
 }
