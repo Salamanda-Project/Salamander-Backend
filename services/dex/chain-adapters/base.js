@@ -203,32 +203,58 @@ class BaseAdapter {
       const validPairs = pairsData.filter(pair => pair !== null);
       
       if (validPairs.length === 0) {
-        logger.warn('No valid pairs to save for Base');
+        logger.warn('No valid pairs to save for Ethereum');
         return;
       }
       
-      const operations = validPairs.map(pair => ({
-        updateOne: {
-          filter: { pair: pair.pair },
-          update: { 
-            $set: { 
-              timestamp: new Date(),
-              baseToken: pair.baseToken,
-              quoteToken: pair.quoteToken,
-              priceData: pair.priceData,
-              volume: pair.volume,
-              tradeCount: pair.tradeCount
-            },
-            $push: { market: { $each: pair.market } }
-          },
-          upsert: true
+      // Process each pair
+      for (const pair of validPairs) {
+        // Find the existing document or create a new one
+        let marketDoc = await this.marketModel.findOne({ pair: pair.pair });
+        
+        if (!marketDoc) {
+          // Create new document if it doesn't exist
+          marketDoc = new this.marketModel({
+            pair: pair.pair,
+            market: [],
+            timestamp: new Date()
+          });
+        } else {
+          // Update timestamp if document exists
+          marketDoc.timestamp = new Date();
         }
-      }));
+        
+        // Update market entries - ensure proper case handling for dex and network
+        for (const marketEntry of pair.market) {
+          // Convert dex and network to uppercase to match schema requirements
+          const dexUpper = marketEntry.dex.toUpperCase();
+          const networkUpper = marketEntry.network.toUpperCase();
+          
+          // Check if this dex+network combination already exists
+          const existingMarketIndex = marketDoc.market.findIndex(
+            m => m.dex === dexUpper && m.network === networkUpper
+          );
+          
+          if (existingMarketIndex !== -1) {
+            // Update existing entry
+            marketDoc.market[existingMarketIndex].price = marketEntry.price;
+          } else {
+            // Add new entry
+            marketDoc.market.push({
+              dex: dexUpper,
+              network: networkUpper,
+              price: marketEntry.price
+            });
+          }
+        }
+        
+        // Save the document
+        await marketDoc.save();
+      }
       
-      await this.marketModel.bulkWrite(operations);
-      logger.info(`Saved ${validPairs.length} price records for Base`);
+      logger.info(`Saved ${validPairs.length} price records for Ethereum`);
     } catch (error) {
-      logger.error('Failed to save Base price data:', error);
+      logger.error('Failed to save Ethereum price data:', error);
       throw error;
     }
   }

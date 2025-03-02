@@ -146,6 +146,66 @@ async function displayTradingPairs(blockchain, dexName, limit = 20) {
 }
 
 /**
+ * Display common trading pairs across blockchains
+ * @param {number} minExchanges - Minimum number of exchanges a pair must be listed on
+ */
+async function displayCommonPairs(minExchanges = 2) {
+  try {
+    logger.info(`Fetching common trading pairs across all blockchains (min ${minExchanges} exchanges)...`);
+    const commonPairs = await dexService.getCommonPairs(minExchanges);
+
+    if (commonPairs.length === 0) {
+      logger.info(`No common pairs found across ${minExchanges} or more exchanges`);
+      return;
+    }
+
+    logger.info(`Found ${commonPairs.length} common pairs across multiple exchanges`);
+
+    // Create a summary table
+    const headers = ['Pair', 'Exchange Count', 'Blockchains', 'Price (USD)', 'Volume (USD)'];
+    const colWidths = [15, 15, 30, 15, 15];
+    const rows = [];
+
+    commonPairs.forEach(pair => {
+      rows.push([
+        pair.pair,
+        pair.exchanges.length.toString(),
+        pair.blockchains.join(', '),
+        formatNumber(pair.priceData.current, 6),
+        formatNumber(pair.volumeTotal, 2)
+      ]);
+    });
+
+    console.log(createTable(headers, rows, colWidths));
+    
+    // For the top 3 pairs, show detailed breakdown
+    for (let i = 0; i < Math.min(3, commonPairs.length); i++) {
+      const pair = commonPairs[i];
+      console.log(`\nDetailed view for ${pair.pair}:`);
+      
+      // Create headers for each blockchain
+      const blockchainHeaders = ['Exchange', ...pair.blockchains];
+      const detailColWidths = [15, ...pair.blockchains.map(() => 15)];
+      const detailRows = [];
+      
+      // Add rows for each exchange
+      pair.exchanges.forEach(exchange => {
+        const row = [exchange];
+        // For each blockchain, add a placeholder for the price
+        pair.blockchains.forEach(blockchain => {
+          row.push('X'); // Replace with actual price data if available
+        });
+        detailRows.push(row);
+      });
+      
+      console.log(createTable(blockchainHeaders, detailRows, detailColWidths));
+    }
+  } catch (error) {
+    logger.error(`Error fetching common pairs:`, error.message);
+  }
+}
+
+/**
  * Display results of price updates
  * @param {Object} results - Results of price updates
  */
@@ -211,23 +271,29 @@ async function displayPricesForPair(baseToken, quoteToken) {
  */
 async function main() {
   try {
+    // Connect to database
+    logger.info('Connecting to MongoDB...');
+    await mongoose.connect('mongodb://127.0.0.1:27017/coinmarket');
+    logger.info('Connected to MongoDB');
     
     const args = process.argv.slice(2);
     const command = args[0];
     
     if (!command) {
       console.log(`
-DEX Retriever - Command-line tool for DEX data retrieval
-
-Usage:
-  node runDexRetriever.js <command> [options]
-
-Commands:
-  list-dexes <blockchain>           List all DEXes on a blockchain
-  list-pairs <blockchain> <dex>     List trading pairs for a DEX
-  update-prices                     Update prices for all blockchains
-  get-pair <baseToken> <quoteToken> Get prices for a specific trading pair
-      `);
+        DEX Retriever - Command-line tool for DEX data retrieval
+        
+        Usage:
+          node runDexRetriever.js <command> [options]
+        
+        Commands:
+          list-dexes <blockchain>           List all DEXes on a blockchain
+          list-pairs <blockchain> <dex>     List trading pairs for a DEX
+          update-prices                     Update prices for all blockchains
+          get-pair <baseToken> <quoteToken> Get prices for a specific trading pair
+          common-pairs [minExchanges]       List trading pairs common across multiple exchanges
+                                            (default minExchanges: 2)
+        `);
       process.exit(0);
     }
     
@@ -253,6 +319,11 @@ Commands:
         
         await displayTradingPairs(dexBlockchain, dexName, limit);
         break;
+
+      case 'common-pairs':
+        const minExchanges = parseInt(args[1]) || 2;
+        await displayCommonPairs(minExchanges);
+        break;
         
       case 'update-prices':
         logger.info('Updating prices for all blockchains...');
@@ -276,6 +347,8 @@ Commands:
         logger.error(`Unknown command: ${command}`);
         process.exit(1);
     }
+    
+    // await mongoose.disconnect();
     logger.info('Disconnected from MongoDB');
   } catch (error) {
     logger.error('Error:', error.message);
